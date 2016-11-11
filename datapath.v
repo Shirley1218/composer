@@ -7,13 +7,12 @@
 /*                        delay counters simulation passed    */
 /**************************************************************/
 
-
-
+`timescale 1ns/1ns
 
 module datapath(input CLOCK_50,menu_enable,list_enable,note_enable,song_list_enable,
 								draw_score,deleteEnable,InsertEnable,playEnable,end_vga_display,
 					output score_drawn, is_full, insert_delay_done, play_done, //back to controller
-								sound_out);
+								sound);
 
 	/////////clock dividers	/////////////////////						
 	clock_5MHz CLK5(CLOCK_50,clk_5M);	
@@ -59,12 +58,13 @@ module datapath(input CLOCK_50,menu_enable,list_enable,note_enable,song_list_ena
 				.play(InsertEnable)
 				//.ps2_clock(ps2_clock),
 				.ps2_in(keyboard_input),
+				.playAll(1'b0),
 				.hsync(VGA_HS),
 				.vsync(VGA_VS),
 				.vga_r(VGA_R),
 				.vga_g(VGA_G),
 				.vga_b(VGA_B),
-				.sound(sound_out)
+				.sound(sound)
 				);
 				
 				
@@ -77,12 +77,13 @@ module datapath(input CLOCK_50,menu_enable,list_enable,note_enable,song_list_ena
 				.play(playEnable),
 				//.ps2_clock(ps2_clock),
 				.ps2_in(keyboard_input),
+				.playAll(1),
 				.hsync(VGA_HS),
 				.vsync(VGA_VS),
 				.vga_r(VGA_R),
 				.vga_g(VGA_G),
 				.vga_b(VGA_B),
-				.sound(sound_out)
+				.sound(sound)
 				);
 					
 					
@@ -103,6 +104,8 @@ module datapath(input CLOCK_50,menu_enable,list_enable,note_enable,song_list_ena
 
 endmodule
 
+
+/////up down n bits counter
 module updownCounter(clock,reset,enable,up_down,Q);
 	parameter n = 8;
 	input clock,reset,enable,up_down;
