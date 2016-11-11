@@ -1,32 +1,34 @@
 `timescale 1ns/1ns
 /**************************************************************/
+/*  description: This module takes input from users and       */
+/* output enable signals to the data-path module              */
 /*                                                            */
 /*                                                            */
-/*                                                            */
+/*  Last update: Nov 10   Simulation passed                   */
 /**************************************************************/
 
 
-module controller(clk,reset,restart,start,make_my_own,end_insert,is_full,play,play_again,TBD);
+module controller(clk,reset,restart,start,make_my_own,play_saved,score_drawn,insert,delete,end_insert,is_full,insert_delay_done,play,play_done,play_again,
+						menu_enable,list_enable,note_enable,song_list_enable,draw_score,deleteEnable,InsertEnable,playEnable,end_vga_display);
 	//inputs
-	input clk,reset,restart,start,make_my_own;
-	input end_insert,is_full,play,play_again;
+	input clk,reset,restart,start,make_my_own,play_saved,score_drawn,insert,delete;
+	input end_insert,is_full,insert_delay_done,play,play_done,play_again;
 	//outputs
-	output reg memu_vga,list_vga,note_vga,menu_sound,note,sound,list_sound,song_list_vga;
-	output reg insert_module,deleteEnable,InsertEnable,playEnable,play_delaycounter,end_vga_display;
-
-	//description: This module takes input from users and output enable signals to the data-path module
+	output reg menu_enable,list_enable,note_enable,song_list_enable,draw_score,deleteEnable,InsertEnable,playEnable,end_vga_display; 
+	
 	
 	reg [3:0]current_state,next_state = 0;
 		localparam  MENU 					= 4'b0000,
 						START					= 4'b0001,
 						SELECT_MODE			= 4'b0010,	
 						SELECT_SONG			= 4'b0011,
-						INSERT_OR_DELETE	= 4'b0100,
-						DELETE				= 4'b0101,
-						INSERT_NEXT			= 4'b0110,
-						MAKE_SONG			= 4'b0111,
-						PLAY_ALL_NOTE		= 4'b1000,
-						PLAY_WAIT			= 4'b1001;
+						DRAW_BLANK_SCORE  = 4'b0100,
+						INSERT_OR_DELETE	= 4'b0101,
+						DELETE				= 4'b0110,
+						INSERT_NEXT			= 4'b0111,
+						MAKE_SONG			= 4'b1000,
+						PLAY_ALL_NOTE		= 4'b1001,
+						PLAY_WAIT			= 4'b1010;
 						
 						
 						
@@ -37,20 +39,28 @@ module controller(clk,reset,restart,start,make_my_own,end_insert,is_full,play,pl
 			
 			START				  : next_state = SELECT_MODE;
 			
-			SELECT_MODE	  	  : next_state = make_my_own ? INSERT_OR_DELETE : SELECT_SONG;
-
+			SELECT_MODE	  	  : begin 
+										if(make_my_own)
+											next_state = DRAW_BLANK_SCORE;
+										else if(play_saved)	
+											next_state = SELECT_SONG;
+										else next_state = SELECT_MODE;
+									end	
 			SELECT_SONG		  : next_state = play ? PLAY_ALL_NOTE : SELECT_SONG;
 
+			DRAW_BLANK_SCORE : next_state = score_drawn? INSERT_OR_DELETE : DRAW_BLANK_SCORE;
+			
 			INSERT_OR_DELETE : begin
 										if(delete)
 											next_state = DELETE;
+										else if(end_insert || is_full)
+											next_state = MAKE_SONG;										
 										else if(insert)
 											next_state = INSERT_NEXT;
-										else if(end_insert || is_full)
-											next_state = MAKE_SONG;
 										else next_state = INSERT_OR_DELETE;
+									end
 
-			DELETE           : next_state = INSERT_OR_DELETE;
+			DELETE           : next_state = delete ? DELETE : INSERT_OR_DELETE;
 			
 			INSERT_NEXT      : begin
 										if(insert_delay_done)
@@ -90,16 +100,16 @@ module controller(clk,reset,restart,start,make_my_own,end_insert,is_full,play,pl
 	begin: enable_signals
 	
 	//default signals
-	memu_vga,list_vga,note_vga,menu_sound,note,sound,list_sound,song_list_vga,insert_module,deleteEnable,InsertEnable,playEnable,play_delaycounter,end_vga_display;
+	menu_enable = 0;  list_enable = 0; note_enable = 0;//sound = 0;list_sound = 0;
+	song_list_enable = 0; draw_score = 0; deleteEnable = 0; InsertEnable = 0; playEnable = 0;
+	end_vga_display = 0;
 		case(current_state)
 			MENU: begin
-					menu_vga <=1;
-					menu_sound <= 1;
+					menu_enable <=1;
 					end
 					
 			START: begin
-					list_vga <= 1;
-					list_sound <= 1;
+					list_enable <= 1;
 					end
 					
 			SELECT_MODE: 
@@ -109,13 +119,18 @@ module controller(clk,reset,restart,start,make_my_own,end_insert,is_full,play,pl
 					
 			SELECT_SONG: 
 					begin
-					song_list_vga <= 1;
+					song_list_enable <= 1;
 					//select = 1 		
 					end
-					 
+			
+			DRAW_BLANK_SCORE:
+					begin
+						draw_score <= 1; 		
+					end
+			
 			INSERT_OR_DELETE: 
 					begin
-						insert_module <= 1; 		
+						//insert_module <= 1; 		
 					end
 					 
 			DELETE: 
@@ -125,9 +140,8 @@ module controller(clk,reset,restart,start,make_my_own,end_insert,is_full,play,pl
 						
 			INSERT_NEXT: 
 					begin
-						InsertENable <= 1; //counter + n ;counter output : is_full
-						note_vga <= 1;
-						note_sound <= 1;
+						InsertEnable <= 1; //counter + n ;counter output : is_full
+						note_enable <= 1;
 					end
 
 			MAKE_SONG: 
@@ -135,7 +149,7 @@ module controller(clk,reset,restart,start,make_my_own,end_insert,is_full,play,pl
 					//do nothing
 					
 					end
-			PLAY_ALL_NODE:
+			PLAY_ALL_NOTE:
 					begin 
 						playEnable <= 1;
 						//play_delaycounter <= 1;// counter output :play_done
@@ -147,6 +161,9 @@ module controller(clk,reset,restart,start,make_my_own,end_insert,is_full,play,pl
 					end
 		endcase
 	end
+	
+endmodule
+
 	
 	
 	
