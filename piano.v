@@ -1,15 +1,19 @@
 /**************************************************************/
+/*   This module takes keyboard ascii input, playbacks to     */
+/*  users. It also records inputs one by one. Use playAll     */
+/*  enbale to read notes from memory block and playback to    */
+/*  user.                                                     */
 /*                                                            */
-/*                                                            */
+/*  Last edit: remove VGA demo from this module               */
 /*                                                            */
 /**************************************************************/
 
 module piano(clock,clk_5MHz,resetn,
-					record,erase,play,ps2_received,
+					record,erase,play,ps2_received,playAll,
 					//hsync,vsync,vga_r,vga_g,vga_b, 
 					sound,out);
 					
-	input clock,clk_5MHz,resetn,record,erase,play,ps2_in;
+	input clock,clk_5MHz,resetn,record,erase,play,ps2_in,playAll;
 	//output hsync,vsync,vga_r,vga_g,vga_b,
 	output sound;
 	output [7:0]out;
@@ -26,7 +30,7 @@ module piano(clock,clk_5MHz,resetn,
 	record_and_replay R1( .clk_5MHz(clk_5MHz),
 								 .recordEnable(record),      //write enable   one at a time
 						 		 .eraseEnable(erase),        //erase one note at a time
-							  	 .outEnable(play),				//read enable   read all
+							  	 .outEnable(playAll),				//read enable   read all
 						 		 .key_in(ps2_received),      //keyboard input  ***make LUT later
 								 .record_out(record_out));   //read memory
 	
