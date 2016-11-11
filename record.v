@@ -1,20 +1,30 @@
+/**************************************************************/
+/*  This module records notes user entered in a memmory block */
+/*  one by one every half second                              */
+/*                                                            */
+/*                                                            */
+/*  Last edit:           change 16Hz freq to 2Hz              */
+/*                                                            */
+/**************************************************************/
+
+`timescale 1ns/1ns
 module record_and_replay(clk_5MHz,recordEnable,eraseEnable,outEnable,key_in,record_out);
 	input clk_5MHz;
 	input recordEnable,eraseEnable,outEnable;
 	input [7:0]key_in;
 	output reg [7:0]record_out;
 	
-	reg [25:0]count_16;
-	wire clk_16Hz;
+	//reg [25:0]count_16;
+	wire clk_2Hz;
 	reg [7:0]memory[127:0]; //memory block , how to use On chip memory SRAM or RAM?
 	reg [6:0]count;
 	
-	clock_16Hz CLK1(clk_5MHz,clk_16Hz);
-	
+	//clock_16Hz CLK1(clk_5MHz,clk_16Hz);
+	clock_2Hz CLK1(clk_5MHz,clk_2Hz);
 	
 	
 	///input or erase////////////
-	always@(posedge clk_16Hz)
+	always@(posedge clk_2Hz)
 	begin
 		if(recordEnable == 1'b1)
 			begin
@@ -31,7 +41,7 @@ module record_and_replay(clk_5MHz,recordEnable,eraseEnable,outEnable,key_in,reco
 	
 	/////output memory///////////
 	reg [6:0]ct = 0;
-	always@(posedge clk_16Hz)
+	always@(posedge clk_2Hz)
 	begin
 		if(outEnable == 1'b1) 
 			begin
